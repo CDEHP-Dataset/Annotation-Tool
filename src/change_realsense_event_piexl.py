@@ -1,10 +1,13 @@
+# -*- coding:utf-8 -*-
 import json
-import os
+
+import cv2
 import numpy as np
 import pyrealsense2 as rs
-import cv2
+
 
 class CoordinateConverter:
+
     def __init__(self):
         with open(r"C:\Users\Xavier\Desktop\biaoding\intrinsics.json") as f:
             intrinsics = json.load(f)
@@ -23,6 +26,7 @@ class CoordinateConverter:
         self.cam_matrix_right = np.load(r"C:\Users\Xavier\Desktop\biaoding\annt\m_r.npy")
         self.R = np.load(r"C:\Users\Xavier\Desktop\biaoding\annt\R.npy")
         self.T = np.load(r"C:\Users\Xavier\Desktop\biaoding\annt\T.npy")
+
     def get_m(self):
         r_t = np.hstack([self.R, self.T])
         temp = np.zeros(len(r_t[0]))
@@ -30,15 +34,17 @@ class CoordinateConverter:
         r_t = np.vstack([r_t, temp])
         m_l = np.hstack([self.cam_matrix_left, np.array([[0]] * len(self.cam_matrix_left))])
         m_r = np.dot(np.hstack([self.cam_matrix_right, np.array([[0]] * len(self.cam_matrix_right))]), r_t)
-        return m_l,m_r
-    def convert(self, x: int, y: int,data):
+        return m_l, m_r
+
+    def convert(self, x: int, y: int, data):
         distance = data[y][x]
         camera_coordinate = rs.rs2_deproject_pixel_to_point(self.intrinsics, [x, y], distance)
-        camera_coordinate = np.array(camera_coordinate).reshape(3,1)
-        m_l,m_r = self.get_m()
+        camera_coordinate = np.array(camera_coordinate).reshape(3, 1)
+        m_l, m_r = self.get_m()
         s_r = np.dot(m_r[-1], np.vstack([camera_coordinate, [1]]))
         r_pi = np.dot(m_r, np.vstack([camera_coordinate, [1]])) / s_r
-        return r_pi[0],r_pi[1]
+        return r_pi[0], r_pi[1]
+
 
 if __name__ == '__main__':
     CV = CoordinateConverter()
@@ -46,8 +52,8 @@ if __name__ == '__main__':
     test_x_y = np.array([[77, 426], [227, 339], [405, 225], [272, 136], [656, 267], [590, 90], [467, 272]])
     point_test_3d = []
     for i in range(len(test_x_y)):
-        x,y = CV.convert(test_x_y[i][0], test_x_y[i][1],data_depth)
-        point_test_3d.append([x,y])
+        x, y = CV.convert(test_x_y[i][0], test_x_y[i][1], data_depth)
+        point_test_3d.append([x, y])
     print(point_test_3d)
     image_l = cv2.imread(r"C:\Users\Xavier\Desktop\0520\color\d435i_07.png")
     image_r = cv2.imread(r"C:\Users\Xavier\Desktop\0520\image_event_binary\celex5_07.png")
@@ -55,7 +61,8 @@ if __name__ == '__main__':
     image_r[:, 638, :] = (255, 0, 0)
     for i in range(len(point_test_3d)):
         image_l[test_x_y[i][1] - 2:test_x_y[i][1] + 2, test_x_y[i][0] - 2:test_x_y[i][0] + 2, :] = (0, 0, 255)
-        image_r[int(point_test_3d[i][1][0]) - 2:int(point_test_3d[i][1][0]) + 2, int(point_test_3d[i][0][0]) - 2:int(point_test_3d[i][0][0]) + 2, :] = (0, 0, 255)
+        image_r[int(point_test_3d[i][1][0]) - 2:int(point_test_3d[i][1][0]) + 2,
+        int(point_test_3d[i][0][0]) - 2:int(point_test_3d[i][0][0]) + 2, :] = (0, 0, 255)
     cv2.imshow("img_l", image_l)
     cv2.waitKey(0)
     cv2.imshow("img_r", image_r)
