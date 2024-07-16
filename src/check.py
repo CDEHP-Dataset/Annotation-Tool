@@ -38,7 +38,7 @@ class LabelTool():
         self.frame.pack(fill=tk.BOTH, expand=1)
         self.parent.resizable(width=tk.TRUE, height=tk.TRUE)
         self.Covter = CoordinateConverter()
-        # 图片大小
+        # image size
 
         self.img_w_up = 848
         self.img_h_up = 480
